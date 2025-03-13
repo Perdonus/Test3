@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Новостной сайт</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* ... (остальные стили) */
+        #auth-buttons {
+            display: flex;
+            gap: 10px;
+            /* Расстояние между кнопками */
+        }
+
+        .hidden-article {
+            display: flex;
+            /* Используем flexbox для управления элементами */
+            flex-direction: column;
+            /* Размещаем элементы вертикально */
+            align-items: flex-start;
+            /* Выравниваем элементы по левому краю */
+            opacity: 0.5;
+            /* Полупрозрачность для скрытых статей */
+        }
+
+        .hidden-article p,
+        .hidden-article h4 {
+            display: none;
+            /* Скрываем текст и заголовок */
+        }
+
+        /* Скрываем элементы для неавторизованных пользователей */
+        #user-info,
+        #add-article {
+            display: none;
+        }
+
+        #clear-button {
+            margin-top: 10px;
+            /* добавляем отступ сверху */
+            padding: 5px 10px;
+            /* добавляем отступы внутри кнопки */
+            background-color: #f00;
+            /* делаем кнопку красной */
+            color: white;
+            /* текст на кнопке белый */
+            border: none;
+            /* убираем рамку */
+            cursor: pointer;
+            /* меняем курсор на "руку" */
+        }
+
+        /* добавляем стиль для разделительной линии */
+        .article-separator {
+            border-top: 1px solid #ccc;
+            /* цвет линии */
+            margin: 10px 0;
+            /* отступы сверху и снизу */
+        }
+
+        .delete-button {
+            background-color: #f00;
+            /* делаем кнопку красной */
+            color: white;
+            /* текст на кнопке белый */
+            border: none;
+            /* убираем рамку */
+            cursor: pointer;
+            /* меняем курсор на "руку" */
+            margin-left: 10px;
+            /* добавляем отступ слева */
+        }
+
+        .report-button {
+            background-color: #ffc800;
+            /* делаем кнопку желтой */
+            color: white;
+            /* текст на кнопке белый */
+            border: none;
+            /* убираем рамку */
+            cursor: pointer;
+            /* меняем курсор на "руку" */
+            margin-left: 10px;
+            /* добавляем отступ слева */
+        }
+
+        #admin-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            z-index: 1000;
+        }
+
+        #admin-button {
+            background-color: #007bff;
+            /* делаем кнопку синей */
+            color: white;
+            /* текст на кнопке белый */
+            border: none;
+            /* убираем рамку */
+            cursor: pointer;
+            /* меняем курсор на "руку" */
+            margin-top: 10px;
+            /* добавляем отступ сверху */
+            padding: 5px 10px;
+            /* добавляем отступы внутри кнопки */
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <section id="auth-form">
+            <h3>Регистрация / Вход</h3>
+            <form id="auth-form">
+                <label for="username">Имя пользователя:</label>
+                <input type="text" id="username" name="username" required>
+
+                <label for="password">Пароль:</label>
+                <input type="password" id="password" name="password" required>
+                <div id="auth-buttons">
+                    <button type="button" id="register-button">Зарегистрироваться</button>
+                    <button type="button" id="login-button">Войти</button>
+                </div>
+            </form>
+        </section>
+
+        <section id="user-info">
+            <span>Привет, <span id="user-name"></span>!</span>
+            <button id="logout-button">Выйти</button>
+        </section>
+
+        <section id="add-article">
+            <h3>Добавить свою статью</h3>
+            <form id="article-form">
+                <label for="title">Заголовок:</label>
+                <input type="text" id="title" name="title" required>
+
+                <label for="content">Текст статьи:</label>
+                <textarea id="content" name="content" required></textarea>
+
+                <button type="submit">Опубликовать</button>
+            </form>
+        </section>
+
+        <section id="user-articles">
+            <h3>Пользовательские статьи</h3>
+        </section>
+
+        <button id="clear-button">Очистить все статьи</button>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Новостной сайт</p>
+        <button id="admin-button">Панель администратора</button>
+    </footer>
+
+    <div id="scroll-up">
+        <i class="fas fa-chevron-up"></i>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // ... (код для прокрутки вверх)
+
+        const authForm = document.getElementById('auth-form');
+        const registerButton = document.getElementById('register-button');
+        const loginButton = document.getElementById('login-button');
+        const userInfo = document.getElementById('user-info');
+        const userName = document.getElementById('user-name');
+        const logoutButton = document.getElementById('logout-button');
+        const addArticle = document.getElementById('add-article');
+        const articleForm = document.getElementById('article-form');
+        const userArticles = document.getElementById('user-articles');
+        const clearButton = document.getElementById('clear-button');
+        const adminButton = document.getElementById('admin-button');
+
+        // Функция для сохранения статей в localStorage
+        function saveArticles() {
+            const articles = userArticles.innerHTML;
+            localStorage.setItem('articles', articles);
+        }
+
+        // Функция для загрузки статей из localStorage
+        function loadArticles() {
+            const articles = localStorage.getItem('articles');
+            if (articles) {
+                userArticles.innerHTML = articles;
+            }
+        }
+
+        // Функция для сохранения данных пользователя в localStorage
+        function saveUserData(username, password) {
+            localStorage.setItem(username, password); // Используем username как ключ
+        }
+
+        // Функция для загрузки данных пользователя из localStorage
+        function loadUserData() {
+            const username = localStorage.getItem('username');
+            if (username) {
+                userName.textContent = username;
+                showArticleForm();
+            }
+        }
+
+        // Функция для отображения формы добавления статьи и скрытия формы авторизации
+        function showArticleForm() {
+            authForm.style.display = 'none';
+            userInfo.style.display = 'block';
+            addArticle.style.display = 'block';
+        }
+
+        // Функция для отображения формы авторизации и скрытия формы добавления статьи
+        function showAuthForm() {
+            authForm.style.display = 'block';
+            userInfo.style.display = 'none';
+            addArticle.style.display = 'none';
+        }
+
+        // Обработчик нажатия кнопки "Зарегистрироваться"
+        registerButton.addEventListener('click', function () {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // Проверяем, существует ли пользователь с таким логином
+            if (localStorage.getItem(username)) { // Проверяем по ключу username
+                alert('Пользователь с таким логином уже существует!');
+                return;
+            }
+
+            // Регистрируем нового пользователя
+            saveUserData(username, password);
+            alert('Регистрация прошла успешно!');
+            document.getElementById('username').value = ''; // Очищаем поле логина
+            document.getElementById('password').value = ''; // Очищаем поле пароля
+        });
+
+        // Обработчик нажатия кнопки "Войти"
+        loginButton.addEventListener('click', function () {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+
+            // Проверяем, существует ли пользователь с таким логином и паролем
+            if (localStorage.getItem(username) && localStorage.getItem(username) === password) { // Проверяем по ключу username
+                userName.textContent = username;
+                showArticleForm();
+            } else {
+                alert('Неверный логин или пароль!');
+            }
+        });
+
+        // Обработчик нажатия кнопки выхода
+        logoutButton.addEventListener('click', function () {
+            showAuthForm();
+            localStorage.removeItem('username'); // Удаляем имя пользователя при выходе
+            localStorage.removeItem('password'); // Удаляем пароль при выходе
+        });
+
+        // Обработчик отправки формы добавления статьи
+        articleForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            const author = userName.textContent; // Получаем логин автора
+
+            const newArticle = document.createElement('article');
+            newArticle.innerHTML = `<div class="article-author">Автор: ${author}</div><h4>${title}</h4><p>${content}</p>`;
+
+            // добавляем разделительную линию перед новой статьей, если есть другие статьи
+            if (userArticles.children.length > 0) {
+                const separator = document.createElement('div');
+                separator.classList.add('article-separator');
+                userArticles.appendChild(separator);
+            }
+
+            userArticles.appendChild(newArticle);
+
+            // Добавляем кнопку удаления, если автор - текущий пользователь
+            if (author === userName.textContent) {
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Удалить';
+                deleteButton.classList.add('delete-button');
+                newArticle.appendChild(deleteButton);
+
+                // Обработчик удаления статьи
+                deleteButton.addEventListener('click', function () {
+                    newArticle.remove(); // удаляем статью
+                    saveArticles(); // сохраняем изменения в localStorage
+                });
+            }
+
+            // Добавляем кнопку "Пожаловаться"
+            const reportButton = document.createElement('button');
+            reportButton.textContent = 'Пожаловаться';
+            reportButton.classList.add('report-button');
+            newArticle.appendChild(reportButton);
+
+            // Обработчик жалобы на статью
+            reportButton.addEventListener('click', function () {
+                const reportData = {
+                    author: author,
+                    title: title,
+                    content: content
+                };
+                // Отправляем данные на сервер или сохраняем локально для админа
+                saveReport(reportData);
+                alert('Жалоба отправлена!');
+            });
+
+
+            document.getElementById('title').value = ''; // Очищаем поле заголовка
+            document.getElementById('content').value = ''; // Очищаем поле текста статьи
+            saveArticles(); // Сохраняем статьи в localStorage
+        });
+
+        function addDeleteButtons() {
+            const articles = userArticles.querySelectorAll('article');
+            articles.forEach(article => {
+                const author = article.querySelector('.article-author').textContent.replace('Автор: ', '');
+
+                const reportButton = document.createElement('button');
+                reportButton.textContent = 'Пожаловаться';
+                reportButton.classList.add('report-button');
+                article.appendChild(reportButton);
+
+                reportButton.addEventListener('click', function () {
+                    const reportData = {
+                        author: author,
+                        title: article.querySelector('h4').textContent,
+                        content: article.querySelector('p').textContent
+                    };
+                    saveReport(reportData);
+                    alert('Жалоба отправлена!');
+                });
+            });
+        }
+
+        function saveReport(reportData) {
+            let reports = JSON.parse(localStorage.getItem('reports')) || [];
+            reports.push(reportData);
+            localStorage.setItem('reports', JSON.stringify(reports));
+        }
+
+        clearButton.addEventListener('click', function () {
+            localStorage.removeItem('articles');
+            userArticles.innerHTML = '';
+        });
+
+        loadUserData();
+        loadArticles();
+
+        const adminPanel = document.createElement('div');
+        adminPanel.id = 'admin-panel';
+        adminPanel.style.display = 'none';
+        adminPanel.innerHTML = `
+            <h3>Панель администратора</h3>
+            <input type="password" id="admin-password" placeholder="Введите пароль администратора">
+            <button id="admin-login">Войти</button>
+            <div id="reports-container"></div>
+        `;
+        document.body.appendChild(adminPanel);
+
+        const adminPasswordInput = document.getElementById('admin-password');
+        const adminLoginButton = document.getElementById('admin-login');
+        const reportsContainer = document.getElementById('reports-container');
+
+        adminLoginButton.addEventListener('click', function () {
+            const password = adminPasswordInput.value;
+            if (password === 'писяпися') {
+                adminPanel.style.display = 'block';
+                loadReports();
+            } else {
+                alert('Неверный пароль!');
+            }
+        });
+
+        function loadReports() {
+            const reports = JSON.parse(localStorage.getItem('reports')) || [];
+            reportsContainer.innerHTML = '';
+            reports.forEach(report => {
+                const reportElement = document.createElement('div');
+                reportElement.innerHTML = `
+                    <p><strong>Автор:</strong> ${report.author}</p>
+                    <p><strong>Заголовок:</strong> ${report.title}</p>
+                    <p><strong>Текст:</strong> ${report.content}</p>
+                    <hr>
+                `;
+                reportsContainer.appendChild(reportElement);
+            });
+        }
+
+        adminButton.addEventListener('click', function () {
+            adminPanel.style.display = 'block';
+        });
+    </script>
+</body>
+
+</html>
